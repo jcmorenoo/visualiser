@@ -3,7 +3,6 @@ export interface IGrid {
   nodes: INode[][];
   startNode?: INode;
   goalNode?: INode;
-  unvisited: INode[],
 }
 
 export interface INode {

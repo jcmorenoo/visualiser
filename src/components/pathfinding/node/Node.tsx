@@ -11,7 +11,8 @@ const Node = (props: NodeProps): JSX.Element => {
   // initialise grid
   const style = {
     width: `${props.sizeInPx}px`,
-    paddingBottom: `${props.sizeInPx}px`
+    paddingBottom: `${props.sizeInPx}px`,
+    opacity: `${100-props.node.weight}%`,
   }
   const backgroundColour = getBackgroundColour(props.node);
   const classNames = ['item', backgroundColour]
@@ -21,7 +22,6 @@ const Node = (props: NodeProps): JSX.Element => {
 };
 
 const getBackgroundColour = (node: INode) => {
-  
   if (node.isStart) {
     return 'item-start';
   }

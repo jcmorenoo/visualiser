@@ -16,27 +16,20 @@ type GridState = IGrid & {
 class Grid extends React.Component<{}, GridState> {
   constructor(props: {}) {
     super(props);
-    const delayInMs = 50;
+    const delayInMs = 10;
     const width = 10;
     const nodes: INode[][] = this.generateNodes(width);
-    const unvisited = nodes.reduce((accum, row) => {
-      accum = accum.concat(...row);
-      return accum;
-    }, []);
     const startNode = nodes[0][0];
-    const goalNode = nodes[width - 2][width - 2];
+    const goalNode = nodes[width - 1][width - 1];
     startNode.isStart = true;
-    startNode.distance = 0;
     goalNode.isGoal = true;
     this.state = {
       width,
       nodes: nodes,
       startNode: startNode,
       goalNode: goalNode,
-      unvisited,
       delayInMs,
     }
-    this.initialiseNodesNeighbours();
   }
   render() {
     const nodes: JSX.Element[] = [];
@@ -71,6 +64,16 @@ class Grid extends React.Component<{}, GridState> {
   }
   restart = () => {
     console.log('restart');
+    const nodes: INode[][] = this.generateNodes(this.state.width);
+    const startNode = nodes[0][0];
+    const goalNode = nodes[this.state.width - 1][this.state.width - 1];
+    startNode.isStart = true;
+    goalNode.isGoal = true;
+    this.setState({
+      nodes: nodes,
+      startNode: startNode,
+      goalNode: goalNode,
+    })
   }
   start = async () => {
     const nodes = [...this.state.nodes];
@@ -100,39 +103,40 @@ class Grid extends React.Component<{}, GridState> {
       }
       nodes.push(nodeRow);
     }
+    this.initialiseNodesNeighbours(nodes);
     return nodes;
   }
 
-  initialiseNodesNeighbours() {
-    const nodes = [...this.state.nodes];
+  initialiseNodesNeighbours(nodes: INode[][]) {
+    const width = nodes.length;
     nodes.forEach((nodeRow, rowIndex) => {
       nodeRow.forEach((node, colIndex) => {
         // Add neighbours above
-        this.tryAddNodeNeighbour(node, rowIndex - 1, colIndex - 1);
-        this.tryAddNodeNeighbour(node, rowIndex - 1, colIndex);
-        this.tryAddNodeNeighbour(node, rowIndex - 1, colIndex + 1);
+        this.tryAddNodeNeighbour(node, rowIndex - 1, colIndex - 1, nodes, width);
+        this.tryAddNodeNeighbour(node, rowIndex - 1, colIndex, nodes, width);
+        this.tryAddNodeNeighbour(node, rowIndex - 1, colIndex + 1, nodes, width);
         // Add neighbours on same row
-        this.tryAddNodeNeighbour(node, rowIndex, colIndex - 1);
-        this.tryAddNodeNeighbour(node, rowIndex, colIndex + 1);
+        this.tryAddNodeNeighbour(node, rowIndex, colIndex - 1, nodes, width);
+        this.tryAddNodeNeighbour(node, rowIndex, colIndex + 1, nodes, width);
         // add neighbours below
-        this.tryAddNodeNeighbour(node, rowIndex + 1, colIndex - 1);
-        this.tryAddNodeNeighbour(node, rowIndex + 1, colIndex);
-        this.tryAddNodeNeighbour(node, rowIndex + 1, colIndex + 1);
+        this.tryAddNodeNeighbour(node, rowIndex + 1, colIndex - 1, nodes, width);
+        this.tryAddNodeNeighbour(node, rowIndex + 1, colIndex, nodes, width);
+        this.tryAddNodeNeighbour(node, rowIndex + 1, colIndex + 1, nodes, width);
       });
     });
   }
 
-  tryAddNodeNeighbour = (node: INode, rowIndex: number, colIndex: number) => {
+  tryAddNodeNeighbour = (node: INode, rowIndex: number, colIndex: number, nodes: INode[][], width: number) => {
     if (
       rowIndex < 0 ||
       colIndex < 0 ||
-      rowIndex >= this.state.width ||
-      colIndex >= this.state.width ||
+      rowIndex >= width ||
+      colIndex >= width ||
       (node.rowIndex === rowIndex && node.colIndex === colIndex)
     ) {
       return;
     }
-    node.neighbours.push(this.state.nodes[rowIndex][colIndex]);
+    node.neighbours.push(nodes[rowIndex][colIndex]);
   }
 
   assignGoalNode = (node: INode) => {
@@ -184,7 +188,10 @@ class Grid extends React.Component<{}, GridState> {
 
   findShortestPath = async () => {
     console.log('findShortestPath');
-    const unvisited = [...this.state.unvisited];
+    const unvisited = this.state.nodes.reduce((accum, row) => {
+      accum = accum.concat(...row);
+      return accum;
+    }, []);
     const startNode = this.state.startNode;
     const goalNode = this.state.goalNode;
 
@@ -192,7 +199,7 @@ class Grid extends React.Component<{}, GridState> {
       console.log('invalid state');
       return;
     }
-
+    startNode.distance = 0;
     while (unvisited.length > 0) {
       const currentNode = unvisited.sort((a: INode, b: INode) => a.distance - b.distance)[0];
 
