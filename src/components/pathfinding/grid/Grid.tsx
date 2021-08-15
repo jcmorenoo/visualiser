@@ -11,12 +11,14 @@ const CONTAINER_SIZE = GRID_WIDTH - (2 * GRID_PADDING);
 
 type GridState = IGrid & {
   delayInMs: number;
+  isSelectingStart: boolean;
+  isSelectingGoal: boolean;
 };
 
 class Grid extends React.Component<{}, GridState> {
   constructor(props: {}) {
     super(props);
-    const delayInMs = 10;
+    const delayInMs = 50;
     const width = 10;
     const nodes: INode[][] = this.generateNodes(width);
     const startNode = nodes[0][0];
@@ -29,6 +31,8 @@ class Grid extends React.Component<{}, GridState> {
       startNode: startNode,
       goalNode: goalNode,
       delayInMs,
+      isSelectingStart: false,
+      isSelectingGoal: false,
     }
   }
   render() {
@@ -36,7 +40,7 @@ class Grid extends React.Component<{}, GridState> {
     const nodeSizeInPx = (CONTAINER_SIZE / this.state.width) - (2 * 0.4) //(total width 610 / number of nodes) - (2*margin)
     for (const row of this.state.nodes) {
       for (const node of row) {
-        nodes.push(<Node node={{ ...node }} sizeInPx={nodeSizeInPx} key={`${node.colIndex}-${node.rowIndex}`}></Node>)
+        nodes.push(<Node node={{ ...node }} sizeInPx={nodeSizeInPx} key={`${node.colIndex}-${node.rowIndex}`} onClick={this.handleNodeClick}></Node>)
       }
     }
     return (
@@ -49,6 +53,7 @@ class Grid extends React.Component<{}, GridState> {
         <div className="control-group">
           <button onClick={this.setStart}>Set Start</button>
           <button onClick={this.setGoal}>Set Goal</button>
+          <button onClick={this.randomiseWeightsOfNodes}>Random Weights</button>
           <button onClick={this.restart}>Restart</button>
           <button onClick={this.start}>Start</button>
         </div>
@@ -56,14 +61,24 @@ class Grid extends React.Component<{}, GridState> {
     );
   }
 
+  randomiseWeightsOfNodes = () => {
+    console.log('Randomise weights')
+    for (const row of this.state.nodes) {
+      for (const node of row) {
+        node.weight = Math.ceil(Math.random() * 75); // between 1 and 75;
+      }
+    }
+    this.forceUpdate();
+  }
   setStart = () => {
     console.log('set start');
+    this.setState({isSelectingStart: true});
   }
   setGoal = () => {
     console.log('set goal');
+    this.setState({isSelectingGoal: true});
   }
   restart = () => {
-    console.log('restart');
     const nodes: INode[][] = this.generateNodes(this.state.width);
     const startNode = nodes[0][0];
     const goalNode = nodes[this.state.width - 1][this.state.width - 1];
@@ -76,11 +91,20 @@ class Grid extends React.Component<{}, GridState> {
     })
   }
   start = async () => {
-    const nodes = [...this.state.nodes];
-    console.log('start');
-    // this.state.startNode?.neighbours.forEach(node => node.isVisited = true);
     await this.findShortestPath();
-    this.setState({ nodes });
+  }
+
+  handleNodeClick = (node: INode) => {
+    console.log('handleClick');
+    if (this.state.isSelectingStart) {
+      console.log('selecting start')
+      this.assignStartNode(node);
+      this.setState({isSelectingStart: false});
+    }
+    else if (this.state.isSelectingGoal) {
+      this.assignGoalNode(node);
+      this.setState({isSelectingGoal: false});
+    }
   }
 
   generateNodes(width: number): INode[][] {
@@ -140,50 +164,50 @@ class Grid extends React.Component<{}, GridState> {
   }
 
   assignGoalNode = (node: INode) => {
-    const currentGoalNode = this.state.goalNode
-    if (node.isGoal) {
-      node.isGoal = false;
+    const currentGoalNode = this.state.goalNode;
+    const selectedNode = this.state.nodes[node.rowIndex][node.colIndex];
+    if (selectedNode.isGoal) {
+      selectedNode.isGoal = false;
       this.setState({
         goalNode: undefined,
       });
       return;
     }
-    if (node.isStart) {
+    if (selectedNode.isStart) {
       return;
     }
     if (currentGoalNode) {
       currentGoalNode.isGoal = false;
     }
-    node.isGoal = true;
+    selectedNode.isGoal = true;
     this.setState({
-      goalNode: node
+      goalNode: selectedNode
     });
   }
 
   assignStartNode = (node: INode) => {
     const currentStartNode = this.state.startNode;
+    const selectedNode = this.state.nodes[node.rowIndex][node.colIndex];
     // Unassign
-    if (node.isStart) {
-      node.isStart = false;
+    if (selectedNode.isStart) {
+      selectedNode.isStart = false;
       this.setState({
         startNode: undefined,
       });
       return;
     }
     // Dont assign if goal
-    if (node.isGoal) {
+    if (selectedNode.isGoal) {
       return;
     }
     // Unset the current startnode if exists
     if (currentStartNode) {
       currentStartNode.isStart = false;
     }
-    node.isStart = true;
+    selectedNode.isStart = true;
     this.setState({
-      startNode: node
+      startNode: selectedNode
     });
-    console.log('node', node)
-    console.log('state', this.state.startNode)
   }
 
   findShortestPath = async () => {
@@ -201,7 +225,14 @@ class Grid extends React.Component<{}, GridState> {
     }
     startNode.distance = 0;
     while (unvisited.length > 0) {
-      const currentNode = unvisited.sort((a: INode, b: INode) => a.distance - b.distance)[0];
+      const currentNode = unvisited.reduce((min, cur) => {
+        if (min == undefined || cur.distance < min.distance) {
+          min = cur;
+        }
+        return min;
+      })
+        // .filter((node) => node.distance < Number.POSITIVE_INFINITY)
+        // .sort((a: INode, b: INode) => a.distance - b.distance)[0];
 
       for (const neighbour of currentNode.neighbours) {
         if (unvisited.indexOf(neighbour) >= 0) {

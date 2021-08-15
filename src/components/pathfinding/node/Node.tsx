@@ -4,6 +4,7 @@ import './Node.css';
 type NodeProps = {
   node: INode
   sizeInPx: number;
+  onClick: (node: INode) => void;
   // todo: Onclick, do something
 }
 
@@ -17,7 +18,7 @@ const Node = (props: NodeProps): JSX.Element => {
   const backgroundColour = getBackgroundColour(props.node);
   const classNames = ['item', backgroundColour]
   return (
-    <div className={`${classNames.join(' ')}`} style={{...style}}></div>
+    <div className={`${classNames.join(' ')}`} style={{...style}} onClick={(_) => props.onClick(props.node)}></div>
   );
 };
 
