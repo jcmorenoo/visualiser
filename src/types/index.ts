@@ -3,6 +3,7 @@ export interface IGrid {
   nodes: INode[][];
   startNode?: INode;
   goalNode?: INode;
+  unvisited: INode[],
 }
 
 export interface INode {
@@ -11,5 +12,9 @@ export interface INode {
   colIndex: number;
   isVisited: boolean;
   isStart: boolean;
-  isGoal: boolean
+  isGoal: boolean;
+  isPath: boolean;
+  previous?: INode;
+  distance: number;
+  weight: number;
 }

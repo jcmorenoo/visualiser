@@ -17,6 +17,10 @@
   background-color: rgb(146, 52, 200);
 }
 
+.item-path {
+  background-color: rgb(28, 160, 98);
+}
+
 .item-goal {
   background-color: rgb(60, 106, 204);
 }

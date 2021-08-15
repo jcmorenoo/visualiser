@@ -21,11 +21,15 @@ const Node = (props: NodeProps): JSX.Element => {
 };
 
 const getBackgroundColour = (node: INode) => {
-  if (node.isGoal) {
+  
+  if (node.isStart) {
+    return 'item-start';
+  }
+  else if (node.isGoal) {
     return 'item-goal';
   }
-  else if (node.isStart) {
-    return 'item-start';
+  else if (node.isPath) {
+    return 'item-path';
   }
   else if (node.isVisited) {
     return 'item-visited';
