@@ -18,8 +18,8 @@ type GridState = IGrid & {
 class Grid extends React.Component<{}, GridState> {
   constructor(props: {}) {
     super(props);
-    const delayInMs = 50;
-    const width = 10;
+    const delayInMs = 25;
+    const width = 15;
     const nodes: INode[][] = this.generateNodes(width);
     const startNode = nodes[0][0];
     const goalNode = nodes[width - 1][width - 1];
