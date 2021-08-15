@@ -9,11 +9,14 @@ const CONTAINER_SIZE = GRID_WIDTH - (2 * GRID_PADDING);
 // padding: 10px;
 // width: 630px;
 
-type GridState = IGrid;
+type GridState = IGrid & {
+  delayInMs: number;
+};
 
 class Grid extends React.Component<{}, GridState> {
   constructor(props: {}) {
     super(props);
+    const delayInMs = 50;
     const width = 10;
     const nodes: INode[][] = this.generateNodes(width);
     const unvisited = nodes.reduce((accum, row) => {
@@ -31,6 +34,7 @@ class Grid extends React.Component<{}, GridState> {
       startNode: startNode,
       goalNode: goalNode,
       unvisited,
+      delayInMs,
     }
     this.initialiseNodesNeighbours();
   }
@@ -68,11 +72,11 @@ class Grid extends React.Component<{}, GridState> {
   restart = () => {
     console.log('restart');
   }
-  start = () => {
+  start = async () => {
     const nodes = [...this.state.nodes];
     console.log('start');
     // this.state.startNode?.neighbours.forEach(node => node.isVisited = true);
-    this.findShortestPath();
+    await this.findShortestPath();
     this.setState({ nodes });
   }
 
@@ -178,7 +182,7 @@ class Grid extends React.Component<{}, GridState> {
     console.log('state', this.state.startNode)
   }
 
-  findShortestPath = () => {
+  findShortestPath = async () => {
     console.log('findShortestPath');
     const unvisited = [...this.state.unvisited];
     const startNode = this.state.startNode;
@@ -203,16 +207,22 @@ class Grid extends React.Component<{}, GridState> {
       }
       currentNode.isVisited = true;
       unvisited.splice(unvisited.indexOf(currentNode), 1);
+      await sleep(this.state.delayInMs);
+      this.forceUpdate();
     }
     // traverse back
     let currentNode = goalNode.previous;
     while (currentNode != undefined) {
       currentNode.isPath = true;
       currentNode = currentNode.previous;
+      await sleep(this.state.delayInMs);
+      this.forceUpdate();
     }
   }
+}
 
-
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 export default Grid;
