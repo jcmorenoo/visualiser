@@ -1,0 +1,22 @@
+.item {
+  /* (total width 610 / number of nodes) - (2*margin) */
+  /* Same as width, sets height */
+  margin: 0.4px;
+  position: relative;
+}
+
+.item-default {
+  background-color: rgb(251, 251, 251);
+}
+
+.item-visited {
+  background-color: rgb(204, 163, 60);
+}
+
+.item-start {
+  background-color: rgb(146, 52, 200);
+}
+
+.item-goal {
+  background-color: rgb(60, 106, 204);
+}
