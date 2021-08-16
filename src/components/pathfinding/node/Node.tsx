@@ -13,7 +13,7 @@ const Node = (props: NodeProps): JSX.Element => {
   const style = {
     width: `${props.sizeInPx}px`,
     paddingBottom: `${props.sizeInPx}px`,
-    opacity: `${100-props.node.weight}%`,
+    opacity: (props.node.isStart || props.node.isGoal) ? '1' : `${1-((props.node.weight-1)/10)}`,
   }
   const backgroundColour = getBackgroundColour(props.node);
   const classNames = ['item', backgroundColour]

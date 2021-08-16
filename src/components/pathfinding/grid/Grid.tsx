@@ -65,7 +65,7 @@ class Grid extends React.Component<{}, GridState> {
     console.log('Randomise weights')
     for (const row of this.state.nodes) {
       for (const node of row) {
-        node.weight = Math.ceil(Math.random() * 75); // between 1 and 75;
+        node.weight = Math.ceil(Math.random() * 10); // between 1 and 75;
       }
     }
     this.forceUpdate();
@@ -230,7 +230,10 @@ class Grid extends React.Component<{}, GridState> {
           min = cur;
         }
         return min;
-      })
+      });
+      if (currentNode.isGoal) {
+        break;
+      }
         // .filter((node) => node.distance < Number.POSITIVE_INFINITY)
         // .sort((a: INode, b: INode) => a.distance - b.distance)[0];
 
