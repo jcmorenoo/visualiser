@@ -24,3 +24,11 @@
 .item-goal {
   background-color: rgb(6, 255, 213);
 }
+
+.item-current {
+  background-color: rgb(230, 6, 6);
+}
+
+.item-wall {
+  background-color: black;
+}

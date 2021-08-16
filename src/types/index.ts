@@ -12,7 +12,9 @@ export interface INode {
   isVisited: boolean;
   isStart: boolean;
   isGoal: boolean;
+  isWall: boolean;
   isPath: boolean;
+  isCurrentNode: boolean;
   previous?: INode;
   distance: number;
   weight: number;

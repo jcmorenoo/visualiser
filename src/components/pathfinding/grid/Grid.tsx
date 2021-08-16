@@ -13,13 +13,14 @@ type GridState = IGrid & {
   delayInMs: number;
   isSelectingStart: boolean;
   isSelectingGoal: boolean;
+  isSelectingWall: boolean;
 };
 
 class Grid extends React.Component<{}, GridState> {
   constructor(props: {}) {
     super(props);
-    const delayInMs = 25;
-    const width = 15;
+    const delayInMs = 100;
+    const width = 10;
     const nodes: INode[][] = this.generateNodes(width);
     const startNode = nodes[0][0];
     const goalNode = nodes[width - 1][width - 1];
@@ -33,6 +34,7 @@ class Grid extends React.Component<{}, GridState> {
       delayInMs,
       isSelectingStart: false,
       isSelectingGoal: false,
+      isSelectingWall: false,
     }
   }
   render() {
@@ -53,7 +55,9 @@ class Grid extends React.Component<{}, GridState> {
         <div className="control-group">
           <button onClick={this.setStart}>Set Start</button>
           <button onClick={this.setGoal}>Set Goal</button>
+          <button onClick={this.setWall}>Set Wall</button>
           <button onClick={this.randomiseWeightsOfNodes}>Random Weights</button>
+          <button onClick={this.randomiseWalls}>Random Walls</button>
           <button onClick={this.restart}>Restart</button>
           <button onClick={this.start}>Start</button>
         </div>
@@ -65,18 +69,38 @@ class Grid extends React.Component<{}, GridState> {
     console.log('Randomise weights')
     for (const row of this.state.nodes) {
       for (const node of row) {
-        node.weight = Math.ceil(Math.random() * 10); // between 1 and 75;
+        node.weight = Math.ceil(Math.random() * 10); // between 1 and 10;
       }
     }
     this.forceUpdate();
   }
+  randomiseWalls = () => {
+    console.log('Randomise Walls');
+    // make some walls
+    for (const row of this.state.nodes) {
+      for (const node of row) {
+        // between 1 and 3
+        const randomNumber = Math.ceil(Math.random() * 2)
+        if (randomNumber === 1) { 
+          this.assignWallNode(node);
+        }
+        else {
+          this.unAssignWallNode(node);
+        }
+      }
+    }
+  }
   setStart = () => {
     console.log('set start');
-    this.setState({isSelectingStart: true});
+    this.setState({ isSelectingStart: true });
   }
   setGoal = () => {
     console.log('set goal');
-    this.setState({isSelectingGoal: true});
+    this.setState({ isSelectingGoal: true });
+  }
+  setWall = () => {
+    console.log('set wall');
+    this.setState((state) => ({ isSelectingWall: !state.isSelectingWall }));
   }
   restart = () => {
     const nodes: INode[][] = this.generateNodes(this.state.width);
@@ -99,11 +123,18 @@ class Grid extends React.Component<{}, GridState> {
     if (this.state.isSelectingStart) {
       console.log('selecting start')
       this.assignStartNode(node);
-      this.setState({isSelectingStart: false});
+      this.setState({ isSelectingStart: false });
     }
     else if (this.state.isSelectingGoal) {
       this.assignGoalNode(node);
-      this.setState({isSelectingGoal: false});
+      this.setState({ isSelectingGoal: false });
+    }
+    else if (this.state.isSelectingWall) {
+      if (!node.isWall) {
+        this.assignWallNode(node);
+      } else {
+        this.unAssignWallNode(node);
+      }
     }
   }
 
@@ -119,9 +150,11 @@ class Grid extends React.Component<{}, GridState> {
           isStart: false,
           isVisited: false,
           isPath: false,
+          isCurrentNode: false,
           neighbours: [],
           distance: Number.POSITIVE_INFINITY,
           weight: 1,
+          isWall: false,
           previous: undefined,
         });
       }
@@ -156,7 +189,8 @@ class Grid extends React.Component<{}, GridState> {
       colIndex < 0 ||
       rowIndex >= width ||
       colIndex >= width ||
-      (node.rowIndex === rowIndex && node.colIndex === colIndex)
+      (node.rowIndex === rowIndex && node.colIndex === colIndex) ||
+      node.isWall || nodes[rowIndex][colIndex].isWall
     ) {
       return;
     }
@@ -210,10 +244,49 @@ class Grid extends React.Component<{}, GridState> {
     });
   }
 
+  assignWallNode = (node: INode) => {
+    const selectedNode = this.state.nodes[node.rowIndex][node.colIndex];
+    if (selectedNode.isGoal || selectedNode.isStart || selectedNode.isWall) {
+      return;
+    }
+    selectedNode.isWall = true;
+    for (const neighbour of selectedNode.neighbours) {
+      neighbour.neighbours.splice(neighbour.neighbours.indexOf(selectedNode), 1);
+    }
+    selectedNode.neighbours = [];
+    this.forceUpdate();
+  }
+
+  unAssignWallNode = (node: INode) => {
+    const { nodes, width } = this.state
+    const selectedNode = this.state.nodes[node.rowIndex][node.colIndex];
+    if (!selectedNode.isWall) {
+      return;
+    }
+    selectedNode.isWall = false;
+    // assign neighbours
+    // Add neighbours above
+    this.tryAddNodeNeighbour(selectedNode, node.rowIndex - 1, node.colIndex - 1, nodes, width);
+    this.tryAddNodeNeighbour(selectedNode, node.rowIndex - 1, node.colIndex, nodes, width);
+    this.tryAddNodeNeighbour(selectedNode, node.rowIndex - 1, node.colIndex + 1, nodes, width);
+    // Add neighbours on same row
+    this.tryAddNodeNeighbour(selectedNode, node.rowIndex, node.colIndex - 1, nodes, width);
+    this.tryAddNodeNeighbour(selectedNode, node.rowIndex, node.colIndex + 1, nodes, width);
+    // add neighbours below
+    this.tryAddNodeNeighbour(selectedNode, node.rowIndex + 1, node.colIndex - 1, nodes, width);
+    this.tryAddNodeNeighbour(selectedNode, node.rowIndex + 1, node.colIndex, nodes, width);
+    this.tryAddNodeNeighbour(selectedNode, node.rowIndex + 1, node.colIndex + 1, nodes, width);
+
+    for (const neighbour of selectedNode.neighbours) {
+      neighbour.neighbours.push(selectedNode);
+    }
+    this.forceUpdate();
+  }
+
   findShortestPath = async () => {
     console.log('findShortestPath');
     const unvisited = this.state.nodes.reduce((accum, row) => {
-      accum = accum.concat(...row);
+      accum = accum.concat(...(row.filter(node => !node.isWall)));
       return accum;
     }, []);
     const startNode = this.state.startNode;
@@ -231,12 +304,17 @@ class Grid extends React.Component<{}, GridState> {
         }
         return min;
       });
+      if (currentNode.distance === Number.POSITIVE_INFINITY) {
+        alert('NO WAAAAYYYY!!!!!');
+        console.log('No WAYYYYY!!');
+        return;
+      }
+      currentNode.isCurrentNode = true;
       if (currentNode.isGoal) {
+        currentNode.isCurrentNode = false;
         break;
       }
-        // .filter((node) => node.distance < Number.POSITIVE_INFINITY)
-        // .sort((a: INode, b: INode) => a.distance - b.distance)[0];
-
+      this.forceUpdate();
       for (const neighbour of currentNode.neighbours) {
         if (unvisited.indexOf(neighbour) >= 0) {
           let distanceToNeighbour = currentNode.distance + neighbour.weight;
@@ -247,6 +325,7 @@ class Grid extends React.Component<{}, GridState> {
         }
       }
       currentNode.isVisited = true;
+      currentNode.isCurrentNode = false;
       unvisited.splice(unvisited.indexOf(currentNode), 1);
       await sleep(this.state.delayInMs);
       this.forceUpdate();

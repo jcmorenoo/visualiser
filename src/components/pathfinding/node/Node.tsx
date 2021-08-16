@@ -13,7 +13,7 @@ const Node = (props: NodeProps): JSX.Element => {
   const style = {
     width: `${props.sizeInPx}px`,
     paddingBottom: `${props.sizeInPx}px`,
-    opacity: (props.node.isStart || props.node.isGoal) ? '1' : `${1-((props.node.weight-1)/10)}`,
+    opacity: (props.node.isStart || props.node.isGoal || props.node.isWall) ? '1' : `${1-((props.node.weight-1)/10)}`,
   }
   const backgroundColour = getBackgroundColour(props.node);
   const classNames = ['item', backgroundColour]
@@ -23,16 +23,22 @@ const Node = (props: NodeProps): JSX.Element => {
 };
 
 const getBackgroundColour = (node: INode) => {
+  if (node.isWall) {
+    return 'item-wall';
+  }
+  if (node.isCurrentNode) {
+    return 'item-current';
+  }
   if (node.isStart) {
     return 'item-start';
   }
-  else if (node.isGoal) {
+  if (node.isGoal) {
     return 'item-goal';
   }
-  else if (node.isPath) {
+  if (node.isPath) {
     return 'item-path';
   }
-  else if (node.isVisited) {
+  if (node.isVisited) {
     return 'item-visited';
   }
   else {
