@@ -1,7 +1,7 @@
 .item {
   /* (total width 610 / number of nodes) - (2*margin) */
   /* Same as width, sets height */
-  margin: 0.4px;
+  margin: 0.5px;
   position: relative;
 }
 

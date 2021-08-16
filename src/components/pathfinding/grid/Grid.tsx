@@ -37,7 +37,7 @@ class Grid extends React.Component<{}, GridState> {
   }
   render() {
     const nodes: JSX.Element[] = [];
-    const nodeSizeInPx = (CONTAINER_SIZE / this.state.width) - (2 * 0.4) //(total width 610 / number of nodes) - (2*margin)
+    const nodeSizeInPx = (CONTAINER_SIZE / this.state.width) - (2 * 0.5) //(total width 610 / number of nodes) - (2*margin)
     for (const row of this.state.nodes) {
       for (const node of row) {
         nodes.push(<Node node={{ ...node }} sizeInPx={nodeSizeInPx} key={`${node.colIndex}-${node.rowIndex}`} onClick={this.handleNodeClick}></Node>)
