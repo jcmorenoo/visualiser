@@ -18,12 +18,15 @@ export class PriorityQueue<T> {
 
   public push(priorityQueueItem: PriorityQueueItem<T>): void;
   public push(item: T, priority: number): void;
-  public push(item: PriorityQueueItem<T> | T, priority = 0) {
+  public push(item: PriorityQueueItem<T> | T, priority?: number) {
     let newItem: PriorityQueueItem<T>;
     if (item instanceof PriorityQueueItem) {
       newItem = item;
     }
     else {
+      if (priority == null) {
+        throw Error('Priority missing');
+      }
       newItem = new PriorityQueueItem(priority, item);
     }
     // insert to the last
@@ -54,14 +57,47 @@ export class PriorityQueue<T> {
     return this.heap.length === 0;
   }
 
+  public getLength(): number {
+    return this.heap.length;
+  }
+
   private bubbleUp(index: number) {
-    // while item is more prioritised than parent and index is not parent
-    // swap with parent
+    while (index !== 0) {
+      let parentIndex = this.getParentIndex(index);
+      let parentItem = this.heap[parentIndex];
+      let item = this.heap[index];
+
+      // item is already in correct position
+      // if the parent has higher priority than itself
+      if (parentItem.priority < item.priority) {
+        return;
+      }
+
+      this.swap(parentIndex, index);
+      index = parentIndex;
+      parentItem = this.heap[this.getParentIndex(index)];
+    }
   }
 
   private bubbleDown(index: number) {
-    // while item has less priority than min of left and right
-    // swap with min of left and right
+    while (index < this.heap.length) {
+      let leftIndex = this.getLeftIndex(index);
+      let rightIndex = this.getRightIndex(index);
+      if (leftIndex >= this.heap.length) {
+        return;
+      }
+      let childWithHighestPriority = leftIndex;
+      if (this.heap[rightIndex] && this.heap[rightIndex].priority < this.heap[leftIndex].priority){
+        childWithHighestPriority = rightIndex;
+      }
+      // item is already in the correct position
+      // if it's priority is higher than it's child
+      if (this.heap[index].priority < this.heap[childWithHighestPriority].priority) {
+        return;
+      }
+      this.swap(index, childWithHighestPriority);
+      index = childWithHighestPriority;
+    }
   }
 
   private swap(firstIndex: number, secondIndex: number) {
